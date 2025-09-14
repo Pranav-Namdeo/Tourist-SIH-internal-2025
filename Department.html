@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAVIQ - Department Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #8338ec;
+            --success: #06d6a0;
+            --warning: #ffd166;
+            --danger: #ef476f;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light: #f8f9fa;
+            --gray: #2d2d2d;
+            --border: #404040;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--darker);
+            padding: 20px 0;
+            border-right: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 20px;
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo span {
+            color: var(--success);
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .nav-links li {
+            margin-bottom: 10px;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--light);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background-color: var(--gray);
+            color: var(--primary);
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--darker);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .card-desc {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        /* Charts */
+        .chart-container {
+            background-color: var(--darker);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .chart-actions button {
+            background-color: var(--gray);
+            border: none;
+            color: var(--light);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .chart-actions button:hover {
+            background-color: var(--primary);
+        }
+
+        .chart-canvas-container { /* Changed from .chart */
+            height: 300px;
+            width: 100%;
+            background-color: var(--gray);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+        }
+
+        /* Tables */
+        .table-container {
+            background-color: var(--darker);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: var(--gray);
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status.active {
+            background-color: rgba(6, 214, 160, 0.2);
+            color: var(--success);
+        }
+
+        .status.pending, .status.monitoring, .status.progress, .status.inactive {
+            background-color: rgba(255, 209, 102, 0.2);
+            color: var(--warning);
+        }
+        
+        .status.restricted { /* Added for tourist profiles */
+            background-color: rgba(255, 209, 102, 0.2);
+            color: var(--warning);
+        }
+
+        .status.alert, .status.critical, .status.urgent {
+            background-color: rgba(239, 71, 111, 0.2);
+            color: var(--danger);
+        }
+        .status.low {
+            background-color: rgba(58, 134, 255, 0.2); /* primary light */
+            color: var(--primary);
+        }
+        .status.medium {
+            background-color: rgba(255, 209, 102, 0.2);
+            color: var(--warning);
+        }
+        .status.high {
+            background-color: rgba(239, 71, 111, 0.2);
+            color: var(--danger);
+        }
+        .status.sent { /* for department alerts */
+            background-color: rgba(6, 214, 160, 0.2);
+            color: var(--success);
+        }
+
+
+        /* Map Container */
+        .map-container {
+            background-color: var(--darker);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #department-map { /* Replaced .map with #department-map */
+            height: 400px;
+            width: 100%;
+            background-color: var(--gray);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        .map-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .legend-color.red {
+            background-color: var(--danger);
+        }
+
+        .legend-color.orange {
+            background-color: var(--warning);
+        }
+
+        .legend-color.green {
+            background-color: var(--success);
+        }
+        .legend-color.blue {
+            background-color: var(--primary);
+        }
+        .legend-color.purple {
+            background-color: var(--secondary);
+        }
+
+
+        /* Map Controls */
+        .map-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .map-control {
+            background-color: var(--gray);
+            border: 1px solid var(--border);
+            color: var(--light);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .map-control:hover {
+            background-color: var(--primary);
+        }
+
+        .map-control.active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* E-FIR Reports Page Styles */
+        .efir-page {
+            display: none;
+        }
+
+        /* Alert Page Styles */
+        .alert-page {
+            display: none;
+        }
+
+        .alert-container {
+            background-color: var(--darker);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .alert-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert-actions button {
+            background-color: var(--gray);
+            border: none;
+            color: var(--light);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .alert-actions button:hover {
+            background-color: var(--primary);
+        }
+
+        .alert-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background-color: var(--gray);
+            color: var(--light);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .form-check input {
+            margin-right: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2a75ff;
+        }
+
+        .btn-secondary {
+            background-color: var(--gray);
+            color: var(--light);
+        }
+
+        .btn-secondary:hover {
+            background-color: #3d3d3d;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #e53665;
+        }
+
+        .alert-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .history-title {
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .history-time {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .history-content {
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .history-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        /* Tourist Profiles Page Styles */
+        .profiles-page {
+            display: none;
+        }
+        
+        .profiles-page .alert-form {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        @media (max-width: 992px) {
+            .profiles-page .alert-form {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .profiles-page .alert-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--darker);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            .logo span, .nav-links a span {
+                display: none;
+            }
+            .nav-links i {
+                margin-right: 0;
+                font-size: 24px;
+            }
+            .nav-links a {
+                justify-content: center;
+                padding: 15px;
+            }
+            .alert-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .user-info {
+                margin-top: 15px;
+            }
+            .map-controls {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Notification bubble */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #3a86ff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .notification.show {
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i> TRAVIQ <span>DEPT</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="dashboard-link active" data-page="dashboard-page"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <!-- <li><a href="#" data-page="map-page"><i class="fas fa-map-marked-alt"></i> <span>Map</span></a></li> Removed as map is on dashboard now -->
+                <li><a href="#" class="profiles-link" data-page="profiles-page"><i class="fas fa-user-friends"></i> <span>Tourist Profiles</span></a></li>
+                <li><a href="#" class="alerts-link" data-page="alert-page"><i class="fas fa-exclamation-triangle"></i> <span>Alerts</span></a></li>
+                <li><a href="#" class="efir-link" data-page="efir-page"><i class="fas fa-file-alt"></i> <span>E-FIR Reports</span></a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content - Dashboard -->
+        <div class="main-content dashboard-page">
+            <div class="header">
+                <h1>Department Dashboard</h1>
+                <div class="user-info">
+                    <img src="https://xsgames.co/randomusers/avatar.php?g=male" alt="User">
+                    <div>
+                        <div>Officer Caption America</div>
+                        <div style="font-size: 12px; color: #aaa;">Police Department</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Active Tourists</div>
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="active-tourists-card">0</div>
+                    <div class="card-desc">Currently sharing location</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Alerts Today</div>
+                        <div class="card-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="alerts-today-card">0</div>
+                    <div class="card-desc">New alerts for today</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">E-FIR Reports Today</div>
+                        <div class="card-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="efir-reports-card">0</div>
+                    <div class="card-desc">New reports for today</div>
+                </div>
+            </div>
+
+            <!-- Map Section -->
+            <div class="map-container">
+                <div class="chart-header">
+                    <div class="chart-title">Tourist Map - Real-time Overview</div>
+                    <div class="chart-actions">
+                        <button id="refresh-map-data-btn" class="btn btn-secondary">Refresh Data</button>
+                    </div>
+                </div>
+                
+                <div class="map-controls">
+                    <div class="map-control active" id="control-tourist-locations">
+                        <i class="fas fa-users-viewfinder"></i> Live Tourists
+                    </div>
+                    <div class="map-control" id="control-high-risk-zones">
+                        <i class="fas fa-exclamation-triangle"></i> High Risk Zones
+                    </div>
+                    <div class="map-control" id="control-restricted-areas">
+                        <i class="fas fa-ban"></i> Restricted Areas
+                    </div>
+                </div>
+                
+                <div id="department-map">
+                    <!-- Leaflet Map will be initialized here -->
+                </div>
+                <div class="map-overlay">
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <div class="legend-color blue"></div>
+                            <div>Live Tourist</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color red"></div>
+                            <div>High Risk Area</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color purple"></div>
+                            <div>Restricted Area</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="chart-title">Tourist Distribution & Incidents</div>
+                    <div class="chart-actions">
+                        <button class="chart-date-btn active" data-range="7days">Last 7 Days</button>
+                        <button class="chart-date-btn" data-range="30days">Last 30 Days</button>
+                    </div>
+                </div>
+                <div class="chart-canvas-container">
+                    <canvas id="touristIncidentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Alerts Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="chart-title">Recent Alerts</div>
+                    <div class="chart-actions">
+                        <button class="btn btn-secondary view-alerts-btn">View All</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Tourist</th>
+                            <th>Location</th>
+                            <th>Alert Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-alerts-table-body">
+                        <!-- Alerts will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Digital IDs Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="chart-title">Recent Digital ID Verifications</div>
+                    <div class="chart-actions">
+                        <button class="btn btn-secondary">View All</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tourist Name</th>
+                            <th>ID Type</th>
+                            <th>Verification Time</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="digital-ids-table-body">
+                        <!-- Digital IDs will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Alert Management Page -->
+        <div class="main-content alert-page" style="display: none;">
+            <div class="header">
+                <h1>Alert Management</h1>
+                <div class="user-info">
+                    <img src="https://xsgames.co/randomusers/avatar.php?g=male" alt="User">
+                    <div>
+                        <div>Officer Caption America</div>
+                        <div style="font-size: 12px; color: #aaa;">Police Department</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert-container">
+                <div class="alert-header">
+                    <div class="alert-title">Send Manual Alert</div>
+                    <div class="alert-actions">
+                        <button class="btn btn-secondary" id="history-btn">Alert History</button>
+                    </div>
+                </div>
+
+                <form id="alert-form" class="alert-form">
+                    <div>
+                        <div class="form-group">
+                            <label for="alert-type">Alert Type</label>
+                            <select id="alert-type" class="form-control" required>
+                                <option value="">Select Alert Type</option>
+                                <option value="security">Security Alert</option>
+                                <option value="weather">Weather Warning</option>
+                                <option value="health">Health Advisory</option>
+                                <option value="transport">Transport Disruption</option>
+                                <option value="info">Information</option>
+                                <option value="warning">Warning</option>
+                                <option value="emergency">Emergency</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="recipient-type">Send To</label>
+                            <div>
+                                <div class="form-check">
+                                    <input type="radio" id="single-tourist" name="recipient-type" value="single" checked>
+                                    <label for="single-tourist">Single Tourist</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" id="multiple-tourists" name="recipient-type" value="multiple">
+                                    <label for="multiple-tourists">Multiple Tourists</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" id="area-tourists" name="recipient-type" value="area">
+                                    <label for="area-tourists">Tourists in Specific Area (Mock)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" id="all-tourists" name="recipient-type" value="all">
+                                    <label for="all-tourists">All Active Tourists</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="single-tourist-group">
+                            <label for="tourist-select-single">Select Tourist</label>
+                            <select id="tourist-select-single" class="form-control">
+                                <option value="">Select Tourist</option>
+                                <!-- Dynamic options -->
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="multiple-tourists-group" style="display: none;">
+                            <label for="tourist-select-multiple">Select Tourists (Ctrl+Click)</label>
+                            <select id="tourist-select-multiple" class="form-control" multiple size="5">
+                                <!-- Dynamic options -->
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="area-group" style="display: none;">
+                            <label for="area">Select Area (Mock)</label>
+                            <select id="area" class="form-control">
+                                <option value="">Select Area</option>
+                                <option value="downtown">Downtown Area</option>
+                                <option value="beach">Beach Area</option>
+                                <option value="market">Market Area</option>
+                                <option value="historical">Historical Sites</option>
+                                <option value="airport">Airport Vicinity</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-group">
+                            <label for="alert-message">Alert Message</label>
+                            <textarea id="alert-message" class="form-control" rows="6" placeholder="Enter alert message here..." required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority">Priority Level</label>
+                            <select id="priority" class="form-control" required>
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="submit" class="btn btn-primary">Send Alert</button>
+                            <button type="button" class="btn btn-secondary" id="cancel-alert">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="alert-container">
+                <div class="alert-header">
+                    <div class="alert-title">Recent Alert History</div>
+                    <div class="alert-actions">
+                        <button class="btn btn-secondary" id="view-all-alerts-history">Refresh History</button>
+                    </div>
+                </div>
+
+                <div class="alert-history" id="alert-history-list">
+                    <!-- Alert history will be loaded here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tourist Profiles Page -->
+        <div class="main-content profiles-page" style="display: none;">
+            <div class="header">
+                <h1>Tourist Profiles</h1>
+                <div class="user-info">
+                    <img src="https://xsgames.co/randomusers/avatar.php?g=male" alt="User">
+                    <div>
+                        <div>Officer Caption America</div>
+                        <div style="font-size: 12px; color: #aaa;">Police Department</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter Section -->
+            <div class="alert-container">
+                <div class="alert-header">
+                    <div class="alert-title">Search Tourists</div>
+                    <div class="alert-actions">
+                        <button class="btn btn-primary" id="add-tourist-btn">Add New Tourist (Mock)</button>
+                    </div>
+                </div>
+                
+                <div class="alert-form">
+                    <div class="form-group">
+                        <label for="search-tourist">Search by Name or ID</label>
+                        <input type="text" id="search-tourist" class="form-control" placeholder="Enter name or ID number">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filter-status">Filter by Status</label>
+                        <select id="filter-status" class="form-control">
+                            <option value="all">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="restricted">Restricted</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filter-nationality">Filter by Nationality</label>
+                        <select id="filter-nationality" class="form-control">
+                            <option value="all">All Nationalities</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="Australia">Australia</option>
+                            <option value="Canada">Canada</option>
+                            <option value="Germany">Germany</option>
+                            <option value="France">France</option>
+                            <option value="Russia">Russia</option>
+                            <option value="Norway">Norway</option>
+                            <option value="Sokovia">Sokovia</option>
+                            <option value="Unknown">Unknown</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" style="height: 42px;" id="apply-tourist-filters">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        <button class="btn btn-secondary" style="height: 42px; margin-left: 10px;" id="reset-tourist-filters">
+                            <i class="fas fa-sync"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tourist Profiles Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="chart-title">Tourist Profiles</div>
+                    <div class="chart-actions">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tourist Name</th>
+                            <th>Digital ID</th>
+                            <th>ID Type</th>
+                            <th>Nationality</th>
+                            <th>Arrival Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tourist-profiles-table-body">
+                        <!-- Tourist profiles will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <div style="display: flex; gap: 10px;" id="tourist-pagination">
+                    <!-- Pagination buttons -->
+                </div>
+            </div>
+        </div>
+
+        <!-- E-FIR Reports Page -->
+        <div class="main-content efir-page" style="display: none;">
+            <div class="header">
+                <h1>E-FIR Reports & SOS Management</h1>
+                <div class="user-info">
+                    <img src="https://xsgames.co/randomusers/avatar.php?g=male" alt="User">
+                    <div>
+                        <div>Officer Caption America</div>
+                        <div style="font-size: 12px; color: #aaa;">Police Department</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Pending SOS</div>
+                        <div class="card-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="pending-sos-card">0</div>
+                    <div class="card-desc">Require immediate action</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Today's E-FIR</div>
+                        <div class="card-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="today-efir-card">0</div>
+                    <div class="card-desc">New reports for today</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Resolved Cases (7 Days)</div>
+                        <div class="card-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="resolved-cases-card">0</div>
+                    <div class="card-desc">Last 7 days</div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="alert-container">
+                <div class="alert-header">
+                    <div class="alert-title">Filter Reports</div>
+                </div>
+                
+                <div class="alert-form">
+                    <div class="form-group">
+                        <label for="efir-filter-status">Status</label>
+                        <select id="efir-filter-status" class="form-control">
+                            <option value="all">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="efir-filter-date">Date Range</label>
+                        <select id="efir-filter-date" class="form-control">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="efir-filter-type">Report Type</label>
+                        <select id="efir-filter-type" class="form-control">
+                            <option value="all">All Types</option>
+                            <option value="sos emergency">SOS Emergency</option>
+                            <option value="theft">Theft</option>
+                            <option value="harassment">Harassment</option>
+                            <option value="lost item">Lost Item</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" style="height: 42px; margin-right: 10px;" id="apply-efir-filters">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                        <button class="btn btn-secondary" style="height: 42px;" id="reset-efir-filters">
+                            <i class="fas fa-sync"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- E-FIR Reports Table -->
+            <div class="table-container" id="efir-list-container">
+                <div class="table-header">
+                    <div class="chart-title">SOS & E-FIR Reports</div>
+                    <div class="chart-actions">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="btn btn-primary" id="new-efir-btn">
+                            <i class="fas fa-plus"></i> New E-FIR (Mock)
+                        </button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Tourist</th>
+                            <th>Type</th>
+                            <th>Time</th>
+                            <th>Location</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="efir-table-body">
+                        <!-- E-FIR reports will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Report Detail Modal (hidden by default) -->
+            <div class="alert-container" id="report-detail" style="display: none;">
+                <div class="alert-header">
+                    <div class="alert-title">Report Details - <span id="report-detail-id"></span></div>
+                    <div class="alert-actions">
+                        <button class="btn btn-secondary" id="back-to-efir-list-btn">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alert-form">
+                    <div>
+                        <div class="form-group">
+                            <label>Report ID</label>
+                            <div class="form-control" style="background-color: #2d2d2d;" id="detail-report-id">#SOS-1245</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tourist Name</label>
+                            <div class="form-control" style="background-color: #2d2d2d;" id="detail-tourist-name">Tony Stark</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Report Type</label>
+                            <div class="form-control" style="background-color: #2d2d2d;" id="detail-report-type">SOS Emergency</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <div class="form-control" style="background-color: #2d2d2d;" id="detail-priority">High</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-group">
+                            <label>Date & Time</label>
+                            <div class="form-control" style="background-color: #2d2d2d;" id="detail-date-time">Today, 10:23 AM</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Location</label>
+                            <div class="form-control" style="background-color: #2d2d2d;" id="detail-location">25.3456, 82.3452</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select class="form-control" id="detail-status-select">
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Incident Description</label>
+                    <textarea class="form-control" rows="4" readonly id="detail-description">Tourist reported being followed by suspicious individuals near the market area. Feels unsafe and requested immediate assistance.</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="detail-officer-notes">Officer Notes</label>
+                    <textarea class="form-control" rows="4" placeholder="Add your notes here..." id="detail-officer-notes">Patrol unit dispatched to location. Tourist is currently safe at a nearby cafe until officers arrive.</textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" id="update-report-btn">Update Report</button>
+                    <button class="btn btn-secondary">Assign to Officer (Mock)</button>
+                    <button class="btn btn-danger">Close Report (Mock)</button>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <div style="display: flex; gap: 10px;" id="efir-pagination">
+                    <!-- Pagination buttons -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal (for Alert Sending) -->
+    <div class="modal" id="success-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-response-title">Alert Sent Successfully</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <p id="modal-response-message">Your alert has been sent to the selected recipients.</p>
+            </div>
+            <div style="text-align: right;">
+                <button class="btn btn-primary" id="modal-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Notification -->
+    <div class="notification" id="global-notification"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+    const API_BASE_URL = 'http://localhost:3000/api';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const dashboardPage = document.querySelector('.dashboard-page');
+        const alertPage = document.querySelector('.alert-page');
+        const profilesPage = document.querySelector('.profiles-page');
+        const efirPage = document.querySelector('.efir-page');
+
+        const navLinks = document.querySelectorAll('.nav-links a');
+        const viewAlertsBtn = document.querySelector('.view-alerts-btn');
+        const cancelAlertBtn = document.getElementById('cancel-alert');
+        const historyBtn = document.getElementById('history-btn');
+        const successModal = document.getElementById('success-modal');
+        const modalClose = document.querySelector('.modal-close');
+        const modalOk = document.getElementById('modal-ok');
+        const alertForm = document.getElementById('alert-form');
+        const efirFilterStatus = document.getElementById('efir-filter-status');
+        const efirFilterDate = document.getElementById('efir-filter-date');
+        const efirFilterType = document.getElementById('efir-filter-type');
+        const applyEfirFiltersBtn = document.getElementById('apply-efir-filters');
+        const resetEfirFiltersBtn = document.getElementById('reset-efir-filters');
+        const touristSearchInput = document.getElementById('search-tourist');
+        const touristFilterStatus = document.getElementById('filter-status');
+        const touristFilterNationality = document.getElementById('filter-nationality');
+        const applyTouristFiltersBtn = document.getElementById('apply-tourist-filters');
+        const resetTouristFiltersBtn = document.getElementById('reset-tourist-filters');
+        const addTouristBtn = document.getElementById('add-tourist-btn'); // New Tourist button
+
+        let departmentMap = null;
+        let touristMarkersLayer = L.layerGroup();
+        let riskZonesLayer = L.layerGroup();
+        let restrictedAreasLayer = L.layerGroup();
+        // let heatMapLayer = null; // Placeholder for heatmap - not implemented in this scope
+
+        let touristIncidentChart = null;
+
+        // Initial page load - show dashboard
+        showPage('dashboard-page');
+        loadDashboardData();
+        loadTouristsForAlertForm();
+
+        // --- Global Notification Function ---
+        function showGlobalNotification(message, type = 'info', duration = 3000) {
+            const notification = document.getElementById('global-notification');
+            notification.textContent = message;
+            let bgColor = '#3a86ff'; // info (primary)
+            if (type === 'success') bgColor = '#06d6a0';
+            else if (type === 'error') bgColor = '#ef476f';
+            else if (type === 'warning') bgColor = '#ffd166';
+
+            notification.style.backgroundColor = bgColor;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+
+        // --- Page Navigation ---
+        function showPage(pageId) {
+            document.querySelectorAll('.main-content').forEach(page => {
+                page.style.display = 'none';
+            });
+            document.querySelector(`.${pageId}`).style.display = 'block';
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === pageId) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Specific page load actions
+            if (pageId === 'dashboard-page') {
+                loadDashboardData();
+                initDepartmentMap(); // Re-initialize map to ensure it's fresh
+            } else if (pageId === 'alert-page') {
+                loadAlertHistory();
+                loadTouristsForAlertForm(); // Ensure dropdowns are updated
+            } else if (pageId === 'profiles-page') {
+                loadTouristProfiles();
+            } else if (pageId === 'efir-page') {
+                loadEfirReports();
+                loadEfirDashboardStats();
+                // Ensure efir list view is active by default
+                document.getElementById('efir-list-container').style.display = 'block';
+                document.getElementById('report-detail').style.display = 'none';
+            }
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage(this.dataset.page);
+            });
+        });
+
+        // "View All" on dashboard recent alerts card
+        viewAlertsBtn.addEventListener('click', () => showPage('alert-page'));
+
+        // "Cancel" button on Alert Management page
+        cancelAlertBtn.addEventListener('click', () => showPage('dashboard-page'));
+
+        // "Alert History" button on Alert Management page
+        historyBtn.addEventListener('click', function() {
+            const historySection = document.getElementById('alert-history-list');
+            historySection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // "Back to List" button on E-FIR Report Detail
+        document.getElementById('back-to-efir-list-btn').addEventListener('click', function() {
+            document.getElementById('efir-list-container').style.display = 'block';
+            document.getElementById('report-detail').style.display = 'none';
+            loadEfirReports(); // Refresh the list
+        });
+        
+        // "New E-FIR" button (Mock)
+        document.getElementById('new-efir-btn').addEventListener('click', function() {
+            showGlobalNotification('This is a mock action. In a real app, a form to file a new E-FIR would appear.', 'info');
+        });
+
+        // "Add New Tourist" button (Mock)
+        addTouristBtn.addEventListener('click', function() {
+            showGlobalNotification('This is a mock action. In a real app, a form to add a new tourist would appear.', 'info');
+        });
+
+        // --- Dashboard Data Loading ---
+        async function loadDashboardData() {
+            try {
+                const statsResponse = await fetch(`${API_BASE_URL}/department/dashboard/stats`);
+                if (!statsResponse.ok) throw new Error('Failed to fetch stats');
+                const stats = await statsResponse.json();
+                document.getElementById('active-tourists-card').textContent = stats.activeTourists;
+                document.getElementById('alerts-today-card').textContent = stats.alertsToday;
+                document.getElementById('efir-reports-card').textContent = stats.efirReports;
+
+                await loadRecentAlerts();
+                await loadDigitalIdVerifications();
+                await loadChartData();
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                showGlobalNotification('Failed to load dashboard data.', 'error');
+            }
+        }
+
+        // Refresh Map Data on Dashboard
+        document.getElementById('refresh-map-data-btn').addEventListener('click', initDepartmentMap);
+
+        async function loadRecentAlerts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/dashboard/recent-alerts`);
+                if (!response.ok) throw new Error('Failed to fetch recent alerts');
+                const alerts = await response.json();
+                const tbody = document.getElementById('recent-alerts-table-body');
+                tbody.innerHTML = '';
+                if (alerts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No recent alerts.</td></tr>';
+                    return;
+                }
+                alerts.forEach(alert => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${alert.time}</td>
+                        <td>${alert.tourist}</td>
+                        <td>${alert.location}</td>
+                        <td>${alert.type}</td>
+                        <td><span class="status ${getStatusClass(alert.status)}">${alert.status}</span></td>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading recent alerts:', error);
+                showGlobalNotification('Failed to load recent alerts.', 'error');
+            }
+        }
+
+        async function loadDigitalIdVerifications() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/dashboard/digital-id-verifications`);
+                if (!response.ok) throw new Error('Failed to fetch digital ID verifications');
+                const verifications = await response.json();
+                const tbody = document.getElementById('digital-ids-table-body');
+                tbody.innerHTML = '';
+                if (verifications.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No recent verifications.</td></tr>';
+                    return;
+                }
+                verifications.forEach(verification => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${verification.touristName}</td>
+                        <td>${verification.idType}</td>
+                        <td>${verification.verificationTime}</td>
+                        <td>${verification.location}</td>
+                        <td><span class="status ${getStatusClass(verification.status)}">${verification.status}</span></td>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading digital ID verifications:', error);
+                showGlobalNotification('Failed to load digital ID verifications.', 'error');
+            }
+        }
+
+        async function loadChartData(range = '7days') { // range is currently ignored by mock API
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/dashboard/charts-data`);
+                if (!response.ok) throw new Error('Failed to fetch chart data');
+                const data = await response.json();
+                renderTouristIncidentChart(data.labels, data.touristCounts, data.incidentCounts);
+            } catch (error) {
+                console.error('Error loading chart data:', error);
+                showGlobalNotification('Failed to load chart data.', 'error');
+            }
+        }
+
+        document.querySelectorAll('.chart-date-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.chart-date-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                loadChartData(this.dataset.range);
+            });
+        });
+
+        function renderTouristIncidentChart(labels, touristData, incidentData) {
+            const ctx = document.getElementById('touristIncidentChart').getContext('2d');
+            if (touristIncidentChart) {
+                touristIncidentChart.destroy(); // Destroy previous chart instance
+            }
+            touristIncidentChart = new Chart(ctx, {
+                type: 'bar', // Combined bar and line
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Tourist Count',
+                            data: touristData,
+                            backgroundColor: 'rgba(58, 134, 255, 0.8)', // Primary color
+                            borderColor: 'rgba(58, 134, 255, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Incident Reports',
+                            data: incidentData,
+                            backgroundColor: 'rgba(239, 71, 111, 0.8)', // Danger color
+                            borderColor: 'rgba(239, 71, 111, 1)',
+                            borderWidth: 1,
+                            type: 'line', // Line for incidents
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: 'var(--border)' },
+                            ticks: { color: 'var(--light)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: 'var(--border)' },
+                            ticks: { color: 'var(--light)' },
+                            title: {
+                                display: true,
+                                text: 'Tourist Count',
+                                color: 'var(--light)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false }, // Only draw grid lines for the first y-axis
+                            ticks: { color: 'var(--light)' },
+                            title: {
+                                display: true,
+                                text: 'Incident Reports',
+                                color: 'var(--light)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'var(--light)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // --- Map Initialization & Control ---
+        function initDepartmentMap() {
+            if (departmentMap) {
+                departmentMap.remove(); // Destroy existing map instance
+            }
+            departmentMap = L.map('department-map').setView([26.8467, 80.9462], 10); // Center: Lucknow, India
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(departmentMap);
+
+            touristMarkersLayer.addTo(departmentMap);
+            riskZonesLayer.addTo(departmentMap);
+            restrictedAreasLayer.addTo(departmentMap);
+
+            // Ensure initial state matches active classes
+            document.getElementById('control-tourist-locations').classList.add('active');
+            document.getElementById('control-high-risk-zones').classList.remove('active');
+            document.getElementById('control-restricted-areas').classList.remove('active');
+
+            loadMapData();
+        }
+
+        async function loadMapData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/dashboard/map-data`);
+                if (!response.ok) throw new Error('Failed to fetch map data');
+                const data = await response.json();
+                
+                updateTouristMarkers(data.touristLocations);
+                updateRiskZones(data.highRiskZones);
+                updateRestrictedAreas(data.restrictedAreas);
+            } catch (error) {
+                console.error('Error loading map data:', error);
+                showGlobalNotification('Failed to load map data.', 'error');
+            }
+        }
+
+        function updateTouristMarkers(locations) {
+            touristMarkersLayer.clearLayers();
+            locations.forEach(loc => {
+                L.marker([loc.lat, loc.lng], {
+                    icon: L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<i class="fas fa-user-circle" style="color:${loc.type === 'tourist' ? 'var(--primary)' : 'gray'}; font-size: 24px;"></i>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    })
+                })
+                .bindPopup(`<b>${loc.name}</b><br>Tourist ID: ${loc.id}<br>Lat: ${loc.lat}, Lng: ${loc.lng}`)
+                .addTo(touristMarkersLayer);
+            });
+        }
+
+        function updateRiskZones(zones) {
+            riskZonesLayer.clearLayers();
+            zones.forEach(zone => {
+                L.circle([zone.lat, zone.lng], {
+                    color: 'var(--danger)',
+                    fillColor: 'rgba(239, 71, 111, 0.4)',
+                    fillOpacity: 0.5,
+                    radius: zone.radius || 500 // Default to 500m radius
+                })
+                .bindPopup(`<b>${zone.name}</b><br>High Risk Zone`)
+                .addTo(riskZonesLayer);
+            });
+        }
+
+        function updateRestrictedAreas(areas) {
+            restrictedAreasLayer.clearLayers();
+            areas.forEach(area => {
+                L.circleMarker([area.lat, area.lng], {
+                    radius: 8,
+                    color: 'var(--secondary)', // Purple
+                    fillColor: 'rgba(131, 56, 236, 0.6)',
+                    fillOpacity: 0.8
+                })
+                .bindPopup(`<b>${area.name}</b><br>Restricted Area`)
+                .addTo(restrictedAreasLayer);
+            });
+        }
+
+        // Map control toggles
+        document.getElementById('control-tourist-locations').addEventListener('click', function() {
+            toggleLayer(touristMarkersLayer, this);
+        });
+        document.getElementById('control-high-risk-zones').addEventListener('click', function() {
+            toggleLayer(riskZonesLayer, this);
+        });
+        document.getElementById('control-restricted-areas').addEventListener('click', function() {
+            toggleLayer(restrictedAreasLayer, this);
+        });
+        // Heatmaps control is left as a mock/placeholder
+        // document.getElementById('control-heatmaps').addEventListener('click', function() {
+        //     document.querySelectorAll('.map-control').forEach(btn => btn.classList.remove('active'));
+        //     this.classList.add('active');
+        //     showGlobalNotification('Heatmap feature not fully implemented (requires plugin).', 'info');
+        // });
+
+        function toggleLayer(layer, button) {
+            if (departmentMap.hasLayer(layer)) {
+                departmentMap.removeLayer(layer);
+                button.classList.remove('active');
+            } else {
+                departmentMap.addLayer(layer);
+                button.classList.add('active');
+            }
+        }
+        
+        // --- Alert Management Page Logic ---
+        const recipientTypeRadios = document.querySelectorAll('input[name="recipient-type"]');
+        const singleTouristGroup = document.getElementById('single-tourist-group');
+        const multipleTouristsGroup = document.getElementById('multiple-tourists-group');
+        const areaGroup = document.getElementById('area-group');
+        const touristSelectSingle = document.getElementById('tourist-select-single');
+        const touristSelectMultiple = document.getElementById('tourist-select-multiple');
+
+        recipientTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                singleTouristGroup.style.display = 'none';
+                multipleTouristsGroup.style.display = 'none';
+                areaGroup.style.display = 'none';
+
+                if (this.value === 'single') {
+                    singleTouristGroup.style.display = 'block';
+                } else if (this.value === 'multiple') {
+                    multipleTouristsGroup.style.display = 'block';
+                } else if (this.value === 'area') {
+                    areaGroup.style.display = 'block';
+                }
+            });
+        });
+
+        async function loadTouristsForAlertForm() {
+            try {
+                // Fetch all tourists, then filter to active for alert form
+                const response = await fetch(`${API_BASE_URL}/department/tourists?limit=9999`); // Fetch all for dropdown
+                if (!response.ok) throw new Error('Failed to fetch tourists for alert form');
+                const result = await response.json();
+                const tourists = result.data.filter(t => t.status === 'Active');
+
+                touristSelectSingle.innerHTML = '<option value="">Select Tourist</option>';
+                touristSelectMultiple.innerHTML = '';
+
+                tourists.forEach(tourist => {
+                    const optionSingle = document.createElement('option');
+                    optionSingle.value = tourist.digitalID;
+                    optionSingle.textContent = `${tourist.fullName} (${tourist.digitalID})`;
+                    touristSelectSingle.appendChild(optionSingle);
+
+                    const optionMultiple = document.createElement('option');
+                    optionMultiple.value = tourist.digitalID;
+                    optionMultiple.textContent = `${tourist.fullName} (${tourist.digitalID})`;
+                    touristSelectMultiple.appendChild(optionMultiple);
+                });
+            } catch (error) {
+                console.error('Error loading tourists for alert form:', error);
+                showGlobalNotification('Failed to load tourist list for alerts.', 'error');
+            }
+        }
+
+        alertForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const alertType = document.getElementById('alert-type').value;
+            const recipientType = document.querySelector('input[name="recipient-type"]:checked').value;
+            let touristDigitalIDs = [];
+            let area = '';
+            const alertMessage = document.getElementById('alert-message').value;
+            const priority = document.getElementById('priority').value;
+
+            if (recipientType === 'single') {
+                const selectedTourist = touristSelectSingle.value;
+                if (selectedTourist) touristDigitalIDs.push(selectedTourist);
+                else { showGlobalNotification('Please select a tourist for single recipient.', 'warning'); return; }
+            } else if (recipientType === 'multiple') {
+                touristDigitalIDs = Array.from(touristSelectMultiple.selectedOptions).map(option => option.value);
+                if (touristDigitalIDs.length === 0) { showGlobalNotification('Please select at least one tourist for multiple recipients.', 'warning'); return; }
+            } else if (recipientType === 'area') {
+                area = document.getElementById('area').value;
+                if (!area) { showGlobalNotification('Please select an area.', 'warning'); return; }
+            }
+            // For 'all' recipients, touristDigitalIDs and area remain empty, backend handles it.
+
+            if (!alertType || !alertMessage || !priority) {
+                showGlobalNotification('Please fill all required alert fields.', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/send-alert`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ alertType, recipientType, touristDigitalIDs, area, alertMessage, priority })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('modal-response-title').textContent = 'Alert Sent Successfully';
+                    document.getElementById('modal-response-message').textContent = `Your alert "${data.alert.title}" has been sent to ${data.alert.recipientsCount} tourists.`;
+                    successModal.style.display = 'flex';
+                    alertForm.reset(); // Clear form
+                    // Reset dropdowns visible state
+                    singleTouristGroup.style.display = 'block';
+                    multipleTouristsGroup.style.display = 'none';
+                    areaGroup.style.display = 'none';
+                    document.getElementById('single-tourist').checked = true;
+                    loadAlertHistory(); // Refresh history
+                    loadDashboardData(); // Refresh dashboard stats
+                } else {
+                    document.getElementById('modal-response-title').textContent = 'Error Sending Alert';
+                    document.getElementById('modal-response-message').textContent = data.message || 'An unknown error occurred.';
+                    successModal.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error sending alert:', error);
+                showGlobalNotification('Error sending alert. Please try again.', 'error');
+            }
+        });
+
+        modalClose.addEventListener('click', () => successModal.style.display = 'none');
+        modalOk.addEventListener('click', () => successModal.style.display = 'none');
+        window.addEventListener('click', (e) => {
+            if (e.target === successModal) successModal.style.display = 'none';
+        });
+
+        async function loadAlertHistory() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/alert-history`);
+                if (!response.ok) throw new Error('Failed to fetch alert history');
+                const history = await response.json();
+                const historyList = document.getElementById('alert-history-list');
+                historyList.innerHTML = '';
+                if (history.length === 0) {
+                    historyList.innerHTML = '<div style="text-align: center; padding: 20px;">No alerts sent yet.</div>';
+                    return;
+                }
+                history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `
+                        <div class="history-header">
+                            <div class="history-title">${item.title}</div>
+                            <div class="history-time">${item.time}</div>
+                        </div>
+                        <div class="history-content">${item.message}</div>
+                        <div class="history-status status ${getStatusClass('Sent')}">Sent to ${item.recipientsCount} tourists</div>
+                    `;
+                    historyList.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Error loading alert history:', error);
+                showGlobalNotification('Failed to load alert history.', 'error');
+            }
+        }
+        document.getElementById('view-all-alerts-history').addEventListener('click', loadAlertHistory);
+
+
+        // --- Tourist Profiles Page Logic ---
+        let currentTouristPage = 1;
+        const touristsPerPage = 5; // Matches table rows visible in HTML
+
+        async function loadTouristProfiles(page = 1) {
+            currentTouristPage = page;
+            const search = touristSearchInput.value.trim();
+            const status = touristFilterStatus.value;
+            const nationality = touristFilterNationality.value;
+
+            try {
+                const query = new URLSearchParams({ search, status, nationality, page, limit: touristsPerPage }).toString();
+                const response = await fetch(`${API_BASE_URL}/department/tourists?${query}`);
+                if (!response.ok) throw new Error('Failed to fetch tourist profiles');
+                const result = await response.json(); // { total, page, limit, data }
+
+                const tbody = document.getElementById('tourist-profiles-table-body');
+                tbody.innerHTML = '';
+                if (result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No tourist profiles found.</td></tr>';
+                    document.getElementById('tourist-pagination').innerHTML = '';
+                    return;
+                }
+
+                result.data.forEach(tourist => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <img src="https://xsgames.co/randomusers/avatar.php?g=male&name=${tourist.fullName.split(' ')[0]}" alt="${tourist.fullName}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
+                                ${tourist.fullName}
+                            </div>
+                        </td>
+                        <td>${tourist.digitalID}</td>
+                        <td>${tourist.idType || 'N/A'}</td>
+                        <td>${tourist.nationality}</td>
+                        <td>${tourist.arrivalDate}</td>
+                        <td><span class="status ${getStatusClass(tourist.status)}">${tourist.status}</span></td>
+                        <td>
+                            <button class="btn btn-secondary" data-tourist-id="${tourist.id}" style="padding: 5px 10px; font-size: 12px;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-primary" data-tourist-id="${tourist.id}" style="padding: 5px 10px; font-size: 12px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    `;
+                });
+                renderPagination('tourist-pagination', result.total, touristsPerPage, currentTouristPage, loadTouristProfiles);
+
+            } catch (error) {
+                console.error('Error loading tourist profiles:', error);
+                showGlobalNotification('Failed to load tourist profiles.', 'error');
+            }
+        }
+
+        applyTouristFiltersBtn.addEventListener('click', () => loadTouristProfiles(1));
+        resetTouristFiltersBtn.addEventListener('click', () => {
+            touristSearchInput.value = '';
+            touristFilterStatus.value = 'all';
+            touristFilterNationality.value = 'all';
+            loadTouristProfiles(1);
+        });
+
+
+        // --- E-FIR Reports Page Logic ---
+        let currentEfirPage = 1;
+        const efirPerPage = 5;
+
+        async function loadEfirDashboardStats() {
+            try {
+                // Fetch all reports to calculate stats (for this demo, fetching all then filtering is fine)
+                const response = await fetch(`${API_BASE_URL}/department/efir?limit=9999`);
+                if (!response.ok) throw new Error('Failed to fetch E-FIR stats data');
+                const result = await response.json();
+                const allReports = result.data;
+
+                const todayIso = new Date().toISOString().split('T')[0];
+                const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+                const pendingSos = allReports.filter(r => r.type.toLowerCase() === 'sos emergency' && r.status.toLowerCase() === 'pending').length;
+                const todayReports = allReports.filter(r => r.time.startsWith(todayIso)).length;
+                const resolvedCasesWeek = allReports.filter(r => r.status.toLowerCase() === 'resolved' && r.time >= oneWeekAgo).length;
+
+                document.getElementById('pending-sos-card').textContent = pendingSos;
+                document.getElementById('today-efir-card').textContent = todayReports;
+                document.getElementById('resolved-cases-card').textContent = resolvedCasesWeek;
+
+            } catch (error) {
+                console.error('Error loading E-FIR dashboard stats:', error);
+                showGlobalNotification('Failed to load E-FIR dashboard stats.', 'error');
+            }
+        }
+
+        async function loadEfirReports(page = 1) {
+            currentEfirPage = page;
+            const status = efirFilterStatus.value;
+            const date = efirFilterDate.value;
+            const type = efirFilterType.value;
+
+            try {
+                const query = new URLSearchParams({ status, date, type, page, limit: efirPerPage }).toString();
+                const response = await fetch(`${API_BASE_URL}/department/efir?${query}`);
+                if (!response.ok) throw new Error('Failed to fetch E-FIR reports');
+                const result = await response.json(); // { total, page, limit, data }
+
+                const tbody = document.getElementById('efir-table-body');
+                tbody.innerHTML = '';
+                if (result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No E-FIR reports found.</td></tr>';
+                    document.getElementById('efir-pagination').innerHTML = '';
+                    return;
+                }
+
+                result.data.forEach(report => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${report.id}</td>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <img src="https://xsgames.co/randomusers/avatar.php?g=male&name=${report.touristName.split(' ')[0]}" alt="${report.touristName}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
+                                ${report.touristName}
+                            </div>
+                        </td>
+                        <td>${report.type}</td>
+                        <td>${report.time}</td>
+                        <td>${typeof report.location === 'object' ? `${report.location.lat}, ${report.location.lng}` : report.location}</td>
+                        <td><span class="status ${getStatusClass(report.priority)}">${report.priority}</span></td>
+                        <td><span class="status ${getStatusClass(report.status)}">${report.status}</span></td>
+                        <td>
+                            <button class="btn btn-secondary view-efir-detail-btn" data-report-id="${report.id}" style="padding: 5px 10px; font-size: 12px;">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    `;
+                });
+                renderPagination('efir-pagination', result.total, efirPerPage, currentEfirPage, loadEfirReports);
+
+                // Attach event listeners for view detail buttons
+                document.querySelectorAll('.view-efir-detail-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => showReportDetail(e.currentTarget.dataset.reportId));
+                });
+
+            } catch (error) {
+                console.error('Error loading E-FIR reports:', error);
+                showGlobalNotification('Failed to load E-FIR reports.', 'error');
+            }
+        }
+
+        applyEfirFiltersBtn.addEventListener('click', () => loadEfirReports(1));
+        resetEfirFiltersBtn.addEventListener('click', () => {
+            efirFilterStatus.value = 'all';
+            efirFilterDate.value = 'all';
+            efirFilterType.value = 'all';
+            loadEfirReports(1);
+        });
+
+        async function showReportDetail(reportId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/efir/${reportId}`);
+                if (!response.ok) throw new Error('Failed to fetch report details');
+                const report = await response.json();
+
+                document.getElementById('report-detail-id').textContent = report.id;
+                document.getElementById('detail-report-id').textContent = report.id;
+                document.getElementById('detail-tourist-name').textContent = report.touristName;
+                document.getElementById('detail-report-type').textContent = report.type;
+                document.getElementById('detail-priority').textContent = report.priority;
+                // Update priority display color
+                document.getElementById('detail-priority').className = `form-control status ${getStatusClass(report.priority)}`;
+
+                document.getElementById('detail-date-time').textContent = report.time;
+                document.getElementById('detail-location').textContent = typeof report.location === 'object' ? `${report.location.lat}, ${report.location.lng}` : report.location;
+                document.getElementById('detail-description').value = report.description;
+                document.getElementById('detail-officer-notes').value = report.officerNotes || '';
+                document.getElementById('detail-status-select').value = report.status;
+
+                document.getElementById('efir-list-container').style.display = 'none';
+                document.getElementById('report-detail').style.display = 'block';
+
+                document.getElementById('update-report-btn').onclick = () => updateReport(report.id);
+
+            } catch (error) {
+                console.error('Error loading report details:', error);
+                showGlobalNotification('Failed to load report details.', 'error');
+            }
+        }
+
+        async function updateReport(reportId) {
+            const status = document.getElementById('detail-status-select').value;
+            const officerNotes = document.getElementById('detail-officer-notes').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/department/efir/${reportId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, officerNotes })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showGlobalNotification('Report updated successfully!', 'success');
+                    document.getElementById('efir-list-container').style.display = 'block';
+                    document.getElementById('report-detail').style.display = 'none';
+                    loadEfirReports(currentEfirPage); // Refresh the list
+                    loadEfirDashboardStats(); // Refresh relevant dashboard stats
+                    loadDashboardData(); // Also refresh main dashboard for updated counts
+                } else {
+                    showGlobalNotification(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error updating report:', error);
+                showGlobalNotification('Failed to update report.', 'error');
+            }
+        }
+
+
+        // --- Utility Functions ---
+        function getStatusClass(status) {
+            const lowerStatus = status.toLowerCase();
+            if (lowerStatus.includes('active') || lowerStatus.includes('resolved') || lowerStatus.includes('sent') || lowerStatus.includes('verified')) return 'active';
+            if (lowerStatus.includes('pending') || lowerStatus.includes('monitoring') || lowerStatus.includes('in progress') || lowerStatus.includes('inactive') || lowerStatus.includes('restricted')) return 'pending';
+            if (lowerStatus.includes('alert') || lowerStatus.includes('urgent') || lowerStatus.includes('critical')) return 'alert';
+            if (lowerStatus.includes('low')) return 'low';
+            if (lowerStatus.includes('medium')) return 'medium';
+            if (lowerStatus.includes('high')) return 'high';
+            return '';
+        }
+
+        function renderPagination(containerId, totalItems, itemsPerPage, currentPage, loadFunction) {
+            const paginationContainer = document.getElementById(containerId);
+            paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            if (totalPages <= 1) return;
+
+            const prevButton = document.createElement('button');
+            prevButton.className = 'btn btn-secondary';
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => loadFunction(currentPage - 1));
+            paginationContainer.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-secondary'}`;
+                pageButton.textContent = i;
+                pageButton.addEventListener('click', () => loadFunction(i));
+                paginationContainer.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.className = 'btn btn-secondary';
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => loadFunction(currentPage + 1));
+            paginationContainer.appendChild(nextButton);
+        }
+
+        // Initialize map immediately
+        initDepartmentMap();
+
+        // Refresh dashboard data periodically
+        setInterval(loadDashboardData, 30000); // Every 30 seconds
+        setInterval(loadMapData, 15000); // Refresh map data every 15 seconds
+    });
+    </script>
+</body>
+</html>
