@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAVIQ - Secure E-KYC Authentication</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: #1e293b;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #0f172a;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: #6366f1;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #f8fafc;
+            background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: #6366f1;
+            color: white;
+        }
+
+        .tab:not(.active):hover {
+            background: #334155;
+        }
+
+        .form-container {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #f8fafc;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input {
+            width: auto;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #6366f1;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #4f46e5;
+        }
+
+        .btn-otp {
+            background: #10b981;
+            margin-top: 0;
+        }
+
+        .btn-otp:hover {
+            background: #059669;
+        }
+
+        .otp-container {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .otp-inputs input {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .document-upload {
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .document-upload:hover {
+            border-color: #6366f1;
+        }
+
+        .document-upload i {
+            font-size: 2.5rem;
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+
+        .terms {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .terms input {
+            width: auto;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+
+        .digital-id-display {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #10b981;
+            border: 1px solid #334155;
+        }
+
+        /* Dashboard Styles */
+        .dashboard {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 20px;
+            position: relative;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #1e293b;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #334155;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s;
+            order: 1; /* Moves profile to left */
+        }
+
+        .profile-btn:hover {
+            background: #475569;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .dashboard-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            order: 2; /* Moves logo to right */
+        }
+
+        .dashboard-logo i {
+            font-size: 2rem;
+            color: #6366f1;
+        }
+
+        .dashboard-logo h1 {
+            font-size: 2.2rem;
+            color: #f8fafc;
+            background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 100px;
+        }
+
+        .dashboard-option {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 1;
+        }
+
+        .dashboard-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .option-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        .sos-btn {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4);
+            z-index: 100;
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: pulse 2s infinite;
+        }
+
+        .sos-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.6);
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+            }
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 15px;
+            width: 250px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+        }
+
+        .profile-menu-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+
+        .profile-menu-item:hover {
+            background: #334155;
+        }
+
+        .profile-menu-item i {
+            width: 20px;
+            color: #6366f1;
+        }
+
+        /* Emergency Contacts Page Styles */
+        .emergency-contacts, .real-time-tracking, .alerts-notifications {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 20px;
+            position: relative;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #334155;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: fit-content;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #475569;
+        }
+
+        .contacts-container, .tracking-container, .alerts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .contacts-section, .tracking-section, .alerts-section {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .contacts-header, .tracking-header, .alerts-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .contacts-header i, .tracking-header i, .alerts-header i {
+            font-size: 1.5rem;
+            color: #6366f1;
+        }
+
+        .contacts-header h2, .tracking-header h2, .alerts-header h2 {
+            margin: 0;
+            text-align: left;
+        }
+
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .contact-card {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.3s;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #f8fafc;
+        }
+
+        .contact-number {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #94a3b8;
+        }
+
+        .contact-action {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .call-btn, .msg-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: opacity 0.3s;
+        }
+
+        .call-btn {
+            background: #10b981;
+            color: white;
+        }
+
+        .msg-btn {
+            background: #6366f1;
+            color: white;
+        }
+
+        .call-btn:hover, .msg-btn:hover {
+            opacity: 0.9;
+        }
+
+        .add-contact {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #334155;
+            border: 2px dashed #475569;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .add-contact:hover {
+            background: #475569;
+        }
+
+        .add-contact i {
+            font-size: 1.5rem;
+            color: #6366f1;
+        }
+        /* Modal for adding contact */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1001; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #1e293b;
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .modal-content h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #f8fafc;
+        }
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+
+        /* Real-time Tracking Styles */
+        .location-sharing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .toggle-label i {
+            font-size: 1.2rem;
+            color: #6366f1;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334155;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #10b981;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .sharing-status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .sharing-active {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .sharing-inactive {
+            background-color: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+        }
+
+        .map-container {
+            height: 300px;
+            background: #0f172a;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        /* Alerts & Notifications Styles */
+        .alerts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mark-all-read {
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .mark-all-read:hover {
+            background: #4f46e5;
+        }
+
+        .alert-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: #334155;
+            color: #cbd5e1;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+
+        .filter-btn:hover {
+            background: #475569;
+        }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .alert-item {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            transition: transform 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .alert-item.unread {
+            border-left: 4px solid #6366f1;
+        }
+
+        .alert-item.emergency {
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-item.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-item.info {
+            border-left: 4px solid #10b981; /* A neutral color for info */
+        }
+
+
+        .alert-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .alert-icon.info {
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+        }
+
+        .alert-icon.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .alert-icon.emergency {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        /* New types for department-sent alerts */
+        .alert-icon.security {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .alert-icon.weather {
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+        }
+        .alert-icon.health {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .alert-icon.transport {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .alert-icon.other {
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+        }
+
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #f8fafc;
+        }
+
+        .alert-message {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .alert-time {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .new-alert-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+
+        .no-alerts {
+            text-align: center;
+            padding: 30px;
+            color: #94a3b8;
+        }
+
+        .no-alerts i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #334155;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                min-height: 600px;
+            }
+            
+            .illustration {
+                flex: 1;
+                background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                color: white;
+                padding: 30px;
+            }
+            
+            .illustration-content {
+                text-align: center;
+            }
+            
+            .illustration i {
+                font-size: 5rem;
+                margin-bottom: 20px;
+            }
+            
+            .form-section {
+                flex: 1;
+                padding: 30px;
+            }
+
+            .dashboard-content {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .contacts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="auth-container">
+        <div class="illustration">
+            <div class="illustration-content">
+                <i class="fas fa-shield-alt"></i>
+                <h2>Secure E-KYC Verification</h2>
+                <p>Verify your identity using Aadhar or Passport for secure access to TRAVIQ services</p>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <header>
+                <div class="logo">
+                    <i class="fas fa-digital-tachograph"></i>
+                    <h1>TRAVIQ</h1>
+                </div>
+                <p class="subtitle">Secure authentication using E-KYC</p>
+            </header>
+            
+            <div class="content">
+                <div class="tabs">
+                    <div class="tab active" data-tab="signup">Sign Up</div>
+                    <div class="tab" data-tab="login">Login</div>
+                </div>
+                
+                <div class="form-container active" id="signup-form">
+                    <h2>Create Your TRAVIQ Digital Identity</h2>
+                    
+                    <div class="input-group">
+                        <label>Select Verification Method</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="verification-method" value="Aadhaar" checked>
+                                Aadhar Card
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="verification-method" value="Passport">
+                                Passport
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label id="id-label">Aadhar Number</label>
+                        <input type="text" id="id-number" placeholder="Enter your 12-digit Aadhar number">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="full-name" placeholder="Enter your full name as on your ID">
+                    </div>
+                    
+                    <div class="input-group">
+                        <button class="btn btn-otp" id="send-otp">Send OTP to Registered Mobile</button>
+                    </div>
+                    
+                    <div class="otp-container" id="otp-section">
+                        <div class="input-group">
+                            <label>Enter OTP</label>
+                            <div class="otp-inputs">
+                                <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                                <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                                <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                                <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                                <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                                <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                            </div>
+                        </div>
+                        <button class="btn btn-otp" id="verify-otp" style="margin-bottom: 20px;">Verify OTP</button>
+
+                        <div id="otp-verified-section" style="display: none;">
+                            <div class="document-upload">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Upload a copy of your <span id="doc-type">Aadhar card</span> for verification</p>
+                                <input type="file" style="display: none;" id="document-upload" accept=".jpg, .jpeg, .png, .pdf">
+                            </div>
+                            <div class="input-group">
+                                <label>Selected Document: <span id="selected-doc-name" style="font-weight: normal; color: #a0aec0;">None</span></label>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label>Your Digital ID</label>
+                                <div class="digital-id-display" id="digital-id-display">
+                                    TRV-XXXX-XXXX-XXXX
+                                </div>
+                                <p style="text-align: center; color: #94a3b8; font-size: 0.9rem;">
+                                    Your Digital ID has been automatically generated
+                                </p>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label>Create Password</label>
+                                <input type="password" id="password" placeholder="Create a strong password">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label>Confirm Password</label>
+                                <input type="password" id="confirm-password" placeholder="Re-enter your password">
+                            </div>
+                            
+                            <div class="terms">
+                                <input type="checkbox" id="terms">
+                                <label for="terms">I agree to the terms and conditions</label>
+                            </div>
+                            
+                            <button class="btn" id="signup-btn">Create Digital Identity</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-container" id="login-form">
+                    <h2>Login to Your TRAVIQ Account</h2>
+                    
+                    <div class="input-group">
+                        <label>Digital ID</label>
+                        <input type="text" id="login-id" placeholder="Enter your Digital ID">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="login-password" placeholder="Enter your password">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="terms">
+                            <input type="checkbox" id="remember">
+                            <label for="remember">Remember me</label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" id="login-btn">Login</button>
+                    
+                    <p class="footer">
+                        <a href="#">Forgot your Digital ID or Password?</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Container -->
+    <div class="dashboard" id="dashboard">
+        <div class="dashboard-header">
+            <!-- Profile on the left -->
+            <div class="profile-btn" id="profile-btn">
+                <div class="profile-img" id="profile-initials">JD</div>
+                <span id="profile-name-display">John Doe</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+
+            <!-- TRAVIQ logo on the right -->
+            <div class="dashboard-logo">
+                <i class="fas fa-digital-tachograph"></i>
+                <h1>TRAVIQ</h1>
+            </div>
+        </div>
+
+        <div class="profile-menu" id="profile-menu">
+            <div class="profile-menu-item">
+                <i class="fas fa-user"></i>
+                <span>Edit Profile</span>
+            </div>
+            <div class="profile-menu-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+            <div class="profile-menu-item">
+                <i class="fas fa-question-circle"></i>
+                <span>Help & Support</span>
+            </div>
+            <div class="profile-menu-item" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="dashboard-option">
+                <div class="option-icon">
+                    <i class="fas fa-route"></i>
+                </div>
+                <h3 class="option-title">Trip Itinerary & Planner</h3>
+                <p class="option-desc">Plan and manage your travel itineraries</p>
+            </div>
+            
+            <div class="dashboard-option">
+                <div class="option-icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h3 class="option-title">Maps</h3>
+                <p class="option-desc">Interactive maps and directions</p>
+            </div>
+            
+            <div class="dashboard-option" id="emergency-contacts-btn">
+                <div class="option-icon">
+                    <i class="fas fa-address-book"></i>
+                </div>
+                <h3 class="option-title">Emergency Contacts</h3>
+                <p class="option-desc">Important contacts for emergencies</p>
+            </div>
+            
+            <div class="dashboard-option" id="real-time-tracking-btn">
+                <div class="option-icon">
+                    <i class="fas fa-satellite"></i>
+                </div>
+                <h3 class="option-title">Real-Time Tracking</h3>
+                <p class="option-desc">Track your location in real-time</p>
+            </div>
+            
+            <div class="dashboard-option" id="alerts-notifications-btn">
+                <div class="option-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3 class="option-title">Alerts & Notification</h3>
+                <p class="option-desc">Get important travel alerts</p>
+            </div>
+            
+            <div class="dashboard-option">
+                <div class="option-icon">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
+                <h3 class="option-title">Feedback</h3>
+                <p class="option-desc">Share your experience with us</p>
+            </div>
+        </div>
+
+        <div class="sos-btn" id="sos-btn">SOS</div>
+    </div>
+
+    <!-- Emergency Contacts Page -->
+    <div class="emergency-contacts" id="emergency-contacts">
+        <div class="dashboard-header">
+            <div class="profile-btn">
+                <div class="profile-img" id="profile-initials-contacts">JD</div>
+                <span id="profile-name-display-contacts">John Doe</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dashboard-logo">
+                <i class="fas fa-digital-tachograph"></i>
+                <h1>TRAVIQ</h1>
+            </div>
+        </div>
+
+        <div class="back-btn" id="back-to-dashboard-contacts">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </div>
+
+        <div class="contacts-container">
+            <div class="contacts-section">
+                <div class="contacts-header">
+                    <i class="fas fa-user-friends"></i>
+                    <h2>Personal Emergency Contacts</h2>
+                </div>
+                <div class="contacts-grid" id="personal-contacts-grid">
+                    <!-- Dynamic personal contacts will be loaded here -->
+                    <div class="add-contact" id="add-contact-btn">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add Emergency Contact</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contacts-section">
+                <div class="contacts-header">
+                    <i class="fas fa-building"></i>
+                    <h2>Official Emergency Contacts</h2>
+                </div>
+                <div class="contacts-grid">
+                    <div class="contact-card">
+                        <div class="contact-name">Police</div>
+                        <div class="contact-number">
+                            <i class="fas fa-phone"></i>
+                            <span>100</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-name">Ambulance</div>
+                        <div class="contact-number">
+                            <i class="fas fa-ambulance"></i>
+                            <span>102</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-name">Fire Brigade</div>
+                        <div class="contact-number">
+                            <i class="fas fa-fire-extinguisher"></i>
+                            <span>101</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-name">Women Helpline</div>
+                        <div class="contact-number">
+                            <i class="fas fa-female"></i>
+                            <span>1091</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-name">Child Helpline</div>
+                        <div class="contact-number">
+                            <i class="fas fa-child"></i>
+                            <span>1098</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-name">Disaster Management</div>
+                        <div class="contact-number">
+                            <i class="fas fa-house-damage"></i>
+                            <span>108</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-name">COVID Helpline</div>
+                        <div class="contact-number">
+                            <i class="fas fa-head-side-mask"></i>
+                            <span>1075</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-name">Railway Enquiry</div>
+                        <div class="contact-number">
+                            <i class="fas fa-train"></i>
+                            <span>139</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn"><i class="fas fa-phone"></i> Call</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sos-btn" id="sos-btn-contacts">SOS</div>
+    </div>
+
+    <!-- Modal for Add Emergency Contact -->
+    <div id="addContactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Add New Emergency Contact</h3>
+            <div class="input-group">
+                <label for="new-contact-name">Name</label>
+                <input type="text" id="new-contact-name" placeholder="E.g., Brother, Friend" required>
+            </div>
+            <div class="input-group">
+                <label for="new-contact-number">Phone Number</label>
+                <input type="tel" id="new-contact-number" placeholder="E.g., +91 1234567890" required>
+            </div>
+            <div class="input-group">
+                <label for="new-contact-relation">Relation (Optional)</label>
+                <input type="text" id="new-contact-relation" placeholder="E.g., Sibling">
+            </div>
+            <button class="btn" id="save-contact-btn">Add Contact</button>
+        </div>
+    </div>
+
+    <!-- Real-Time Tracking Page -->
+    <div class="real-time-tracking" id="real-time-tracking">
+        <div class="dashboard-header">
+            <div class="profile-btn">
+                <div class="profile-img" id="profile-initials-tracking">JD</div>
+                <span id="profile-name-display-tracking">John Doe</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dashboard-logo">
+                <i class="fas fa-digital-tachograph"></i>
+                <h1>TRAVIQ</h1>
+            </div>
+        </div>
+
+        <div class="back-btn" id="back-to-dashboard-tracking">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </div>
+
+        <div class="tracking-container">
+            <div class="tracking-section">
+                <div class="tracking-header">
+                    <i class="fas fa-satellite"></i>
+                    <h2>Real-Time Location Sharing</h2>
+                </div>
+
+                <div class="location-sharing-toggle">
+                    <div class="toggle-label">
+                        <i class="fas fa-location-dot"></i>
+                        <span>Share your real-time location</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="location-sharing-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div id="sharing-status" class="sharing-status sharing-inactive">
+                    <i class="fas fa-circle-xmark"></i> Location sharing is currently inactive
+                </div>
+
+                <div class="map-container">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sos-btn" id="sos-btn-tracking">SOS</div>
+    </div>
+
+    <!-- Alerts & Notifications Page -->
+    <div class="alerts-notifications" id="alerts-notifications">
+        <div class="dashboard-header">
+            <div class="profile-btn">
+                <div class="profile-img" id="profile-initials-alerts">JD</div>
+                <span id="profile-name-display-alerts">John Doe</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dashboard-logo">
+                <i class="fas fa-digital-tachograph"></i>
+                <h1>TRAVIQ</h1>
+            </div>
+        </div>
+
+        <div class="back-btn" id="back-to-dashboard-alerts">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </div>
+
+        <div class="alerts-container">
+            <div class="alerts-section">
+                <div class="alerts-header">
+                    <div>
+                        <i class="fas fa-bell"></i>
+                        <h2>Alerts & Notifications</h2>
+                    </div>
+                    <button class="mark-all-read" id="mark-all-read">Mark All as Read</button>
+                </div>
+
+                <div class="alert-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="unread">Unread</button>
+                    <button class="filter-btn" data-filter="emergency">Emergency</button>
+                    <button class="filter-btn" data-filter="info">Information</button>
+                    <button class="filter-btn" data-filter="warning">Warning</button>
+                    <!-- Added for department-sent alerts -->
+                    <button class="filter-btn" data-filter="security">Security</button>
+                    <button class="filter-btn" data-filter="weather">Weather</button>
+                    <button class="filter-btn" data-filter="health">Health</button>
+                    <button class="filter-btn" data-filter="transport">Transport</button>
+                    <button class="filter-btn" data-filter="other">Other</button>
+                </div>
+
+                <div class="alerts-list" id="alerts-list">
+                    <div class="no-alerts" id="no-alerts-message" style="display: none;">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No alerts to display.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sos-btn" id="sos-btn-alerts">SOS</div>
+    </div>
+
+    <div class="notification" id="notification">
+        <!-- Dynamic notification messages here -->
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let currentTouristId = localStorage.getItem('touristId');
+        let currentTouristFullName = localStorage.getItem('touristFullName');
+        let currentTouristDigitalID = localStorage.getItem('touristDigitalID');
+        let locationSharingInterval;
+        let map;
+        let currentMarker;
+        let locationSharingActive = JSON.parse(localStorage.getItem('locationSharingActive')) || false; // Persist state
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for existing session
+            if (currentTouristId && currentTouristFullName && currentTouristDigitalID) {
+                showDashboard(currentTouristFullName);
+                // Initialize location sharing state on dashboard load
+                updateLocationSharingUI(locationSharingActive); // Will also start/stop interval
+                // Also update the toggle switch on tracking page if it's the initial load
+                if (document.getElementById('location-sharing-toggle')) {
+                    document.getElementById('location-sharing-toggle').checked = locationSharingActive;
+                }
+            }
+
+            // --- Authentication and Signup Logic ---
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.querySelectorAll('.form-container').forEach(form => {
+                        form.classList.remove('active');
+                    });
+                    document.getElementById(`${tab.getAttribute('data-tab')}-form`).classList.add('active');
+                });
+            });
+
+            document.querySelectorAll('input[name="verification-method"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    const idLabel = document.getElementById('id-label');
+                    const docType = document.getElementById('doc-type');
+                    const idNumberInput = document.getElementById('id-number');
+                    if (radio.value === 'Aadhaar') {
+                        idLabel.textContent = 'Aadhar Number';
+                        idNumberInput.placeholder = 'Enter your 12-digit Aadhar number';
+                        docType.textContent = 'Aadhar card';
+                    } else {
+                        idLabel.textContent = 'Passport Number';
+                        idNumberInput.placeholder = 'Enter your passport number';
+                        docType.textContent = 'Passport';
+                    }
+                });
+            });
+
+            document.getElementById('full-name').addEventListener('input', function() {
+                const name = this.value.trim();
+                if (name.length >= 2) { // Minimum length to generate a somewhat meaningful ID
+                    document.getElementById('digital-id-display').textContent = generateDigitalID(name);
+                } else {
+                    document.getElementById('digital-id-display').textContent = 'TRV-XXXX-XXXX-XXXX';
+                }
+            });
+
+            document.getElementById('send-otp').addEventListener('click', async () => {
+                const idNumber = document.getElementById('id-number').value;
+                const fullName = document.getElementById('full-name').value;
+                if (!idNumber || !fullName) {
+                    showNotification('Please fill in ID number and Full Name.', 'red');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idNumber, fullName })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showNotification(data.message, 'green');
+                        document.getElementById('otp-section').style.display = 'block';
+                    } else {
+                        showNotification(data.message, 'red');
+                    }
+                } catch (error) {
+                    console.error('Error sending OTP:', error);
+                    showNotification('Error sending OTP. Please check server console for simulated OTP.', 'red');
+                }
+            });
+
+            document.getElementById('verify-otp').addEventListener('click', async () => {
+                const otpInputs = document.querySelectorAll('.otp-inputs input');
+                const otp = Array.from(otpInputs).map(input => input.value).join('');
+
+                if (otp.length !== 6) {
+                    showNotification('Please enter the full 6-digit OTP.', 'red');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ otp })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showNotification(data.message, 'green');
+                        document.getElementById('otp-verified-section').style.display = 'block';
+                        document.getElementById('verify-otp').style.display = 'none'; // Hide verify button
+                    } else {
+                        showNotification(data.message, 'red');
+                    }
+                } catch (error) {
+                    console.error('Error verifying OTP:', error);
+                    showNotification('Error verifying OTP.', 'red');
+                }
+            });
+
+            document.querySelectorAll('.otp-inputs input').forEach((input, index, arr) => {
+                input.addEventListener('input', () => {
+                    if (input.value.length === 1 && index < arr.length - 1) {
+                        arr[index + 1].focus();
+                    }
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !input.value && index > 0) {
+                        arr[index - 1].focus();
+                    }
+                });
+            });
+
+            document.querySelector('.document-upload').addEventListener('click', () => {
+                document.getElementById('document-upload').click();
+            });
+
+            document.getElementById('document-upload').addEventListener('change', function() {
+                const fileName = this.files.length ? this.files[0].name : 'None';
+                document.getElementById('selected-doc-name').textContent = fileName;
+            });
+
+
+            document.getElementById('signup-btn').addEventListener('click', async () => {
+                const idNumber = document.getElementById('id-number').value.trim();
+                const fullName = document.getElementById('full-name').value.trim();
+                const verificationMethod = document.querySelector('input[name="verification-method"]:checked').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                const termsAgreed = document.getElementById('terms').checked;
+                const digitalID = document.getElementById('digital-id-display').textContent;
+                const documentFile = document.getElementById('document-upload').files[0];
+
+                if (!idNumber || !fullName || !password || !confirmPassword || !digitalID || digitalID === 'TRV-XXXX-XXXX-XXXX') {
+                    showNotification('Please fill all required fields and ensure Digital ID is generated.', 'red');
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    showNotification('Passwords do not match.', 'red');
+                    return;
+                }
+                if (!termsAgreed) {
+                    showNotification('Please agree to terms and conditions.', 'red');
+                    return;
+                }
+                if (!documentFile) {
+                    showNotification('Please upload your document for verification.', 'red');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('idNumber', idNumber);
+                formData.append('fullName', fullName);
+                formData.append('password', password);
+                formData.append('verificationMethod', verificationMethod); // This will be idType on backend
+                formData.append('document', documentFile);
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                        method: 'POST',
+                        body: formData // FormData automatically sets Content-Type to multipart/form-data
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showNotification(data.message, 'green');
+                        localStorage.setItem('touristId', data.id);
+                        localStorage.setItem('touristFullName', fullName);
+                        localStorage.setItem('touristDigitalID', data.digitalID);
+                        currentTouristId = data.id;
+                        currentTouristFullName = fullName;
+                        currentTouristDigitalID = data.digitalID;
+                        showDashboard(fullName);
+                        location.reload(); // Refresh to ensure all states are properly re-initialized after signup
+                    } else {
+                        showNotification(data.message, 'red');
+                    }
+                } catch (error) {
+                    console.error('Signup error:', error);
+                    showNotification('Error during signup. Please try again.', 'red');
+                }
+            });
+
+            document.getElementById('login-btn').addEventListener('click', async () => {
+                const digitalID = document.getElementById('login-id').value.trim();
+                const password = document.getElementById('login-password').value;
+
+                if (!digitalID || !password) {
+                    showNotification('Please enter Digital ID and password.', 'red');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ digitalID, password })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showNotification(data.message, 'green');
+                        localStorage.setItem('touristId', data.tourist.id);
+                        localStorage.setItem('touristFullName', data.tourist.fullName);
+                        localStorage.setItem('touristDigitalID', data.tourist.digitalID);
+                        localStorage.setItem('locationSharingActive', JSON.stringify(data.tourist.locationSharing));
+
+                        currentTouristId = data.tourist.id;
+                        currentTouristFullName = data.tourist.fullName;
+                        currentTouristDigitalID = data.tourist.digitalID;
+                        locationSharingActive = data.tourist.locationSharing;
+                        showDashboard(data.tourist.fullName);
+                        updateLocationSharingUI(locationSharingActive); // Update UI and start/stop interval
+                        location.reload(); // Refresh to ensure all states are properly re-initialized after login
+                    } else {
+                        showNotification(data.message, 'red');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showNotification('Error during login. Please try again.', 'red');
+                }
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('touristId');
+                localStorage.removeItem('touristFullName');
+                localStorage.removeItem('touristDigitalID');
+                localStorage.removeItem('locationSharingActive');
+                currentTouristId = null;
+                currentTouristFullName = null;
+                currentTouristDigitalID = null;
+                locationSharingActive = false;
+                if (locationSharingInterval) {
+                    clearInterval(locationSharingInterval);
+                    locationSharingInterval = null;
+                }
+                document.getElementById('dashboard').style.display = 'none';
+                document.getElementById('auth-container').style.display = 'flex';
+                showNotification('Logged out successfully.', 'blue');
+                location.reload(); // Refresh to ensure all states are properly reset
+            });
+
+
+            // --- Dashboard and Navigation Logic ---
+            document.getElementById('profile-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const menu = document.getElementById('profile-menu');
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#profile-menu') && !e.target.closest('#profile-btn')) {
+                    document.getElementById('profile-menu').style.display = 'none';
+                }
+            });
+
+            document.getElementById('emergency-contacts-btn').addEventListener('click', () => { showPage('emergency-contacts'); loadEmergencyContacts(); });
+            document.getElementById('real-time-tracking-btn').addEventListener('click', () => { showPage('real-time-tracking'); initMap(); });
+            document.getElementById('alerts-notifications-btn').addEventListener('click', () => { showPage('alerts-notifications'); loadAlerts(); });
+
+            document.getElementById('back-to-dashboard-contacts').addEventListener('click', () => showPage('dashboard'));
+            document.getElementById('back-to-dashboard-tracking').addEventListener('click', () => showPage('dashboard'));
+            document.getElementById('back-to-dashboard-alerts').addEventListener('click', () => showPage('dashboard'));
+
+            // --- SOS Button Logic ---
+            document.querySelectorAll('.sos-btn').forEach(button => {
+                button.addEventListener('click', async () => {
+                    if (!currentTouristId) {
+                        showNotification('Please login to use SOS.', 'red');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to send an SOS alert? Your location will be shared with emergency services and your contacts.')) {
+                        try {
+                            const position = await getCurrentLocation();
+                            const response = await fetch(`${API_BASE_URL}/tourist/${currentTouristId}/sos`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ location: { lat: position.coords.latitude, lng: position.coords.longitude } })
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                                showNotification(data.message, 'red');
+                                loadAlerts(); // Refresh alerts to show the new SOS alert
+                            } else {
+                                showNotification(data.message, 'red');
+                            }
+                        } catch (error) {
+                            console.error('SOS error:', error);
+                            showNotification('Failed to send SOS. Make sure location services are enabled and permitted.', 'red');
+                        }
+                    }
+                });
+            });
+
+            // --- Emergency Contacts Page Logic ---
+            document.getElementById('add-contact-btn').addEventListener('click', () => {
+                document.getElementById('addContactModal').style.display = 'flex';
+            });
+
+            document.querySelector('#addContactModal .close-button').addEventListener('click', () => {
+                document.getElementById('addContactModal').style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == document.getElementById('addContactModal')) {
+                    document.getElementById('addContactModal').style.display = 'none';
+                }
+            });
+
+            document.getElementById('save-contact-btn').addEventListener('click', async () => {
+                const name = document.getElementById('new-contact-name').value.trim();
+                const number = document.getElementById('new-contact-number').value.trim();
+                const relation = document.getElementById('new-contact-relation').value.trim();
+
+                if (!name || !number) {
+                    showNotification('Name and Phone Number are required.', 'red');
+                    return;
+                }
+                if (!currentTouristId) {
+                    showNotification('Please login to add contacts.', 'red');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/tourist/${currentTouristId}/contacts`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, number, relation })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showNotification(data.message, 'green');
+                        document.getElementById('addContactModal').style.display = 'none';
+                        document.getElementById('new-contact-name').value = '';
+                        document.getElementById('new-contact-number').value = '';
+                        document.getElementById('new-contact-relation').value = '';
+                        loadEmergencyContacts(); // Reload contacts
+                    } else {
+                        showNotification(data.message, 'red');
+                    }
+                } catch (error) {
+                    console.error('Error adding contact:', error);
+                    showNotification('Error adding contact. Please try again.', 'red');
+                }
+            });
+
+            // --- Real-Time Tracking Logic ---
+            document.getElementById('location-sharing-toggle').addEventListener('change', async function() {
+                if (!currentTouristId) {
+                    showNotification('Please login to toggle location sharing.', 'red');
+                    this.checked = false; // Reset toggle if not logged in
+                    return;
+                }
+                locationSharingActive = this.checked;
+                localStorage.setItem('locationSharingActive', JSON.stringify(locationSharingActive));
+                updateLocationSharingUI(locationSharingActive); // Updates UI and starts/stops interval
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/tourist/${currentTouristId}/toggle-location-sharing`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sharingActive: locationSharingActive })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showNotification(data.message, 'green');
+                    } else {
+                        showNotification(data.message, 'red');
+                        // Revert UI toggle if backend update fails
+                        this.checked = !locationSharingActive;
+                        locationSharingActive = !locationSharingActive;
+                        localStorage.setItem('locationSharingActive', JSON.stringify(locationSharingActive));
+                        updateLocationSharingUI(locationSharingActive);
+                    }
+                } catch (error) {
+                    console.error('Error toggling location sharing:', error);
+                    showNotification('Error toggling location sharing. Please try again.', 'red');
+                    // Revert UI toggle on network error
+                    this.checked = !locationSharingActive;
+                    locationSharingActive = !locationSharingActive;
+                    localStorage.setItem('locationSharingActive', JSON.stringify(locationSharingActive));
+                    updateLocationSharingUI(locationSharingActive);
+                }
+            });
+
+            // --- Alerts & Notifications Logic ---
+            document.querySelectorAll('.alert-filters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.alert-filters .filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    loadAlerts(this.getAttribute('data-filter'));
+                });
+            });
+
+            document.getElementById('mark-all-read').addEventListener('click', async () => {
+                if (!currentTouristId) {
+                    showNotification('Please login to mark alerts as read.', 'red');
+                    return;
+                }
+                const unreadAlertElements = document.querySelectorAll('.alerts-list .alert-item.unread');
+                if (unreadAlertElements.length === 0) {
+                    showNotification('No unread alerts to mark as read.', 'blue');
+                    return;
+                }
+
+                const markPromises = [];
+                unreadAlertElements.forEach(alertElement => {
+                    const alertId = alertElement.dataset.alertId;
+                    markPromises.push(
+                        fetch(`${API_BASE_URL}/tourist/${currentTouristId}/alerts/${alertId}/read`, { method: 'PUT' })
+                            .then(response => {
+                                if (!response.ok) throw new Error(`Failed to mark alert ${alertId} as read`);
+                            })
+                            .catch(error => console.error(`Error marking alert ${alertId} as read:`, error))
+                    );
+                });
+
+                await Promise.allSettled(markPromises); // Wait for all to finish, regardless of individual success/failure
+                showNotification('All unread alerts marked as read (or attempted).', 'green');
+                loadAlerts(document.querySelector('.alert-filters .filter-btn.active').getAttribute('data-filter')); // Reload to reflect changes
+            });
+
+            // Periodically fetch alerts to simulate real-time updates (every 10 seconds)
+            setInterval(() => {
+                if (currentTouristId && document.getElementById('alerts-notifications').style.display === 'block') {
+                    loadAlerts(document.querySelector('.alert-filters .filter-btn.active').getAttribute('data-filter'));
+                }
+            }, 10000); // Check for new alerts every 10 seconds
+
+            // Periodically send location updates if sharing is active (every 15 seconds)
+            setInterval(() => {
+                if (currentTouristId && locationSharingActive) {
+                    sendLocationUpdate();
+                }
+            }, 15000); // Send location every 15 seconds
+        });
+
+        // --- Helper Functions ---
+        function showNotification(message, color = 'blue') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            // Set specific colors for better feedback
+            if (color === 'red') notification.style.background = '#ef4444'; // danger
+            else if (color === 'green') notification.style.background = '#10b981'; // success
+            else notification.style.background = '#6366f1'; // primary / info
+
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function generateDigitalID(name) {
+            const nameParts = name.trim().toUpperCase().split(' ');
+            let initials = '';
+            if (nameParts.length === 1) {
+                initials = nameParts[0].substring(0, 2);
+            } else {
+                initials = nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
+            }
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            const timestamp = Date.now().toString().slice(-4);
+            return `TRV-${initials}${randomNum}-${timestamp}`;
+        }
+
+        function getInitials(fullName) {
+            if (!fullName) return 'JD';
+            const nameParts = fullName.split(' ');
+            if (nameParts.length === 1) return nameParts[0].substring(0, 2).toUpperCase();
+            return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+        }
+
+        function showDashboard(fullName) {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            const initials = getInitials(fullName);
+            document.getElementById('profile-initials').textContent = initials;
+            document.getElementById('profile-name-display').textContent = fullName;
+
+            // Also update for other pages
+            document.getElementById('profile-initials-contacts').textContent = initials;
+            document.getElementById('profile-name-display-contacts').textContent = fullName;
+            document.getElementById('profile-initials-tracking').textContent = initials;
+            document.getElementById('profile-name-display-tracking').textContent = fullName;
+            document.getElementById('profile-initials-alerts').textContent = initials;
+            document.getElementById('profile-name-display-alerts').textContent = fullName;
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.dashboard, .emergency-contacts, .real-time-tracking, .alerts-notifications').forEach(page => {
+                page.style.display = 'none';
+            });
+            document.getElementById(pageId).style.display = 'block';
+             // Re-initialize map if navigating to tracking page
+            if (pageId === 'real-time-tracking') {
+                initMap();
+            }
+        }
+
+        async function loadEmergencyContacts() {
+            if (!currentTouristId) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/tourist/${currentTouristId}/contacts`);
+                if (!response.ok) throw new Error('Failed to fetch contacts');
+                const contacts = await response.json();
+                const grid = document.getElementById('personal-contacts-grid');
+                // Preserve the "Add Contact" button
+                grid.innerHTML = `<div class="add-contact" id="add-contact-btn">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Add Emergency Contact</span>
+                                  </div>`;
+
+                contacts.forEach(contact => {
+                    const contactCard = document.createElement('div');
+                    contactCard.className = 'contact-card';
+                    contactCard.innerHTML = `
+                        <div class="contact-name">${contact.name} ${contact.relation ? `(${contact.relation})` : ''}</div>
+                        <div class="contact-number">
+                            <i class="fas fa-phone"></i>
+                            <span>${contact.number}</span>
+                        </div>
+                        <div class="contact-action">
+                            <button class="call-btn" data-number="${contact.number}"><i class="fas fa-phone"></i> Call</button>
+                            <button class="msg-btn" data-number="${contact.number}"><i class="fas fa-sms"></i> Message</button>
+                        </div>
+                    `;
+                    grid.insertBefore(contactCard, document.getElementById('add-contact-btn'));
+                });
+                 // Re-attach event listener for add contact button
+                document.getElementById('add-contact-btn').addEventListener('click', () => {
+                    document.getElementById('addContactModal').style.display = 'flex';
+                });
+
+                // Attach event listeners for call/message buttons
+                grid.querySelectorAll('.call-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        alert(`Simulating call to ${this.dataset.number}`);
+                        // In a real mobile app, this would use native phone dialer: window.location.href = `tel:${this.dataset.number}`;
+                    });
+                });
+                grid.querySelectorAll('.msg-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        alert(`Simulating message to ${this.dataset.number}`);
+                        // In a real mobile app, this would use native SMS app: window.location.href = `sms:${this.dataset.number}`;
+                    });
+                });
+
+            } catch (error) {
+                console.error('Error loading emergency contacts:', error);
+                showNotification('Failed to load emergency contacts.', 'red');
+            }
+        }
+
+        async function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+                } else {
+                    reject(new Error("Geolocation is not supported by this browser."));
+                }
+            });
+        }
+
+        async function sendLocationUpdate() {
+            if (!currentTouristId || !locationSharingActive) return;
+            try {
+                const position = await getCurrentLocation();
+                const { latitude, longitude } = position.coords;
+                await fetch(`${API_BASE_URL}/tourist/${currentTouristId}/location`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: latitude, lng: longitude })
+                });
+                updateMapMarker({ lat: latitude, lng: longitude });
+                // console.log('Location sent:', latitude, longitude);
+            } catch (error) {
+                console.error('Error sending location update:', error);
+                // showNotification('Failed to get or send location. Please ensure location services are enabled.', 'red');
+                // Optionally, stop sharing if location cannot be obtained for a prolonged period
+                // updateLocationSharingUI(false); // Consider automatically disabling if persistent error
+            }
+        }
+
+        function startLocationUpdates() {
+            if (locationSharingInterval) {
+                clearInterval(locationSharingInterval);
+            }
+            sendLocationUpdate(); // Send immediately on start
+            locationSharingInterval = setInterval(sendLocationUpdate, 10000); // Every 10 seconds
+        }
+
+        function stopLocationUpdates() {
+            if (locationSharingInterval) {
+                clearInterval(locationSharingInterval);
+                locationSharingInterval = null;
+            }
+        }
+
+        function initMap() {
+            if (!map) {
+                map = L.map('map').setView([26.8467, 80.9462], 13); // Default to Lucknow, India
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+            }
+            // Clear existing markers if any
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+                currentMarker = null;
+            }
+
+            // Get current location and update map if sharing is active, or just get current location once
+            if (currentTouristId) {
+                getCurrentLocation()
+                    .then(position => {
+                        const { latitude, longitude } = position.coords;
+                        const initialLocation = { lat: latitude, lng: longitude };
+                        updateMapMarker(initialLocation);
+                        map.setView([latitude, longitude], 15); // Center map on current location
+                    })
+                    .catch(error => {
+                        console.warn('Could not get initial location for map:', error.message);
+                        showNotification('Could not get current location. Ensure location services are enabled.', 'warning');
+                        map.setView([26.8467, 80.9462], 13); // Fallback to default view
+                    });
+            }
+
+            // Start continuous updates if sharing is already active
+            if (locationSharingActive) {
+                startLocationUpdates();
+            } else {
+                stopLocationUpdates(); // Ensure no lingering intervals
+            }
+        }
+
+        function updateMapMarker(location) {
+            if (!map) return;
+            const latLng = [location.lat, location.lng];
+            if (currentMarker) {
+                currentMarker.setLatLng(latLng);
+            } else {
+                currentMarker = L.marker(latLng).addTo(map)
+                    .bindPopup("Your current location").openPopup();
+            }
+            // Optionally, pan the map to the new location, but only if it's not too far
+            // or if the user hasn't explicitly panned away.
+            // For simplicity, we'll keep it centered on the marker.
+            map.panTo(latLng);
+        }
+
+        async function updateLocationSharingUI(isActive) {
+            const sharingStatusElement = document.getElementById('sharing-status');
+            const toggleSwitch = document.getElementById('location-sharing-toggle');
+
+            toggleSwitch.checked = isActive; // Ensure switch matches state
+
+            if (isActive) {
+                sharingStatusElement.className = 'sharing-status sharing-active';
+                sharingStatusElement.innerHTML = '<i class="fas fa-circle-check"></i> Location sharing is active';
+                if (!locationSharingInterval && currentTouristId) { // Prevent multiple intervals
+                    startLocationUpdates();
+                }
+            } else {
+                sharingStatusElement.className = 'sharing-status sharing-inactive';
+                sharingStatusElement.innerHTML = '<i class="fas fa-circle-xmark"></i> Location sharing is currently inactive';
+                stopLocationUpdates();
+                if (currentMarker && map) { // Only remove marker if it exists and map is initialized
+                    map.removeLayer(currentMarker);
+                    currentMarker = null;
+                }
+            }
+        }
+
+        async function loadAlerts(filter = 'all') {
+            if (!currentTouristId) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/tourist/${currentTouristId}/alerts`);
+                if (!response.ok) throw new Error('Failed to fetch alerts');
+                const alerts = await response.json();
+                const alertsList = document.getElementById('alerts-list');
+                alertsList.innerHTML = ''; // Clear existing alerts
+                const noAlertsMessage = document.getElementById('no-alerts-message');
+
+                let filteredAlerts = alerts;
+                if (filter !== 'all') {
+                    if (filter === 'unread') {
+                        filteredAlerts = alerts.filter(alert => alert.unread);
+                    } else {
+                        filteredAlerts = alerts.filter(alert => alert.type.toLowerCase() === filter.toLowerCase());
+                    }
+                }
+
+                if (filteredAlerts.length === 0) {
+                    noAlertsMessage.style.display = 'block';
+                } else {
+                    noAlertsMessage.style.display = 'none';
+                    filteredAlerts.forEach(alert => {
+                        const alertItem = document.createElement('div');
+                        alertItem.className = `alert-item ${alert.unread ? 'unread' : ''} ${alert.type}`;
+                        alertItem.dataset.alertId = alert.id;
+                        alertItem.innerHTML = `
+                            <div class="alert-icon ${alert.type}">
+                                <i class="${getAlertIcon(alert.type)}"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">${alert.title}</div>
+                                <div class="alert-message">${alert.message}</div>
+                                <div class="alert-time">${formatTime(alert.time)}</div>
+                            </div>
+                            ${alert.unread ? '<div class="new-alert-indicator"></div>' : ''}
+                        `;
+                        alertItem.addEventListener('click', () => markAlertAsRead(alert.id, alertItem));
+                        alertsList.appendChild(alertItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+                showNotification('Failed to load alerts.', 'red');
+            }
+        }
+
+        async function markAlertAsRead(alertId, alertElement) {
+            if (!currentTouristId) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/tourist/${currentTouristId}/alerts/${alertId}/read`, {
+                    method: 'PUT'
+                });
+                if (response.ok) {
+                    alertElement.classList.remove('unread');
+                    alertElement.querySelector('.new-alert-indicator')?.remove();
+                    // Optional: showNotification('Alert marked as read.', 'green');
+                } else {
+                    showNotification('Failed to mark alert as read.', 'red');
+                }
+            } catch (error) {
+                console.error('Error marking alert as read:', error);
+                showNotification('Error marking alert as read.', 'red');
+            }
+        }
+
+        function getAlertIcon(type) {
+            switch (type.toLowerCase()) {
+                case 'emergency': return 'fas fa-exclamation-triangle';
+                case 'warning': return 'fas fa-exclamation-circle';
+                case 'info': return 'fas fa-info-circle';
+                case 'security': return 'fas fa-shield-alt';
+                case 'weather': return 'fas fa-cloud-showers-heavy';
+                case 'health': return 'fas fa-heartbeat';
+                case 'transport': return 'fas fa-bus';
+                case 'other': return 'fas fa-bell';
+                default: return 'fas fa-bell';
+            }
+        }
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+            if (diffSeconds < 60) return 'Just now';
+            if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)} minutes ago`;
+            if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)} hours ago`;
+
+            return date.toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>
